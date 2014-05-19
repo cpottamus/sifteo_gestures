@@ -4,6 +4,7 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
+// #include <unistd.h>
 using namespace Sifteo;
 
 Metadata M = Metadata()
@@ -65,7 +66,7 @@ void main()
      * our onWrite() handler in onConnect() and onDisconnect(), respectively.
      *
      * Note that attach() will empty our transmit and receive queues. If we want
-     * to enqueue write packets in onConnct(), we need to be sure the pipe is
+     * to enqueue write packets in onConnect(), we need to be sure the pipe is
      * attached before we set up onConnect/onDisconnect.
      */
 
@@ -80,16 +81,13 @@ void main()
 
     Events::usbConnect.set(onConnect);
     Events::usbDisconnect.set(onDisconnect);
+    Events::cubeTouch.set(onCubeTouch);
 
     if (Usb::isConnected()) {
         onConnect();
     } else {
         onDisconnect();
     }
-
-    /*
-     * Everything else happens in event handlers, nothing to do in our main loop.
-     */
 
     while (1) {
 
@@ -109,6 +107,14 @@ void main()
             usbCounters.receivedBytes(), usbCounters.sentBytes(),
             usbCounters.userPacketsDropped());
     }
+}
+
+void onCubeTouch(void* ctxt, unsigned id){
+    CubeID cube(id);
+
+    LOG("COW goes moo\n");
+    // execl('playpause.sh', NULL);
+
 }
 
 void onConnect()
@@ -200,6 +206,9 @@ void readPacket()
          * Dump out its contents in hexadecimal, to the log and the display.
          */
 
+
+         //USE THE CONTENTS HERE FOR SOME COOL BULLSHIT!
+
         LOG("Received: %d bytes, type=%02x, data=%19h\n",
             packet.size(), packet.type(), packet.bytes());
 
@@ -224,7 +233,7 @@ void readPacket()
 
 void onWriteAvailable()
 {
-    LOG("onWriteAvailable() called\n");
+    // LOG("onWriteAvailable() called\n");
 
     /*
      * We could potentially write here, though in high throughput scenarios,
@@ -262,7 +271,7 @@ void writePacket()
         packet.resize(packet.capacity());
 
         for (unsigned i = 0; i < packet.capacity(); ++i) {
-            packet.bytes()[i] = 'a' + i;
+            packet.bytes()[i] = 0;
         }
 
         /* 
