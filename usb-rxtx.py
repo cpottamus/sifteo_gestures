@@ -74,4 +74,8 @@ while True:
     type, payload = receive(dev)
     if len(payload) >= 3:
         print "accel:", payload[0], payload[1], payload[2]
+    if len(payload) >= 7:
+        print "\t tilt:", payload[3], payload[4], payload[5]
+        print "\t touch:", payload[6]
+        print "\t shake:", payload[7]
 

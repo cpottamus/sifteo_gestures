@@ -19,12 +19,24 @@ Metadata M = Metadata()
  */
 UsbPipe <1,4> usbPipe;
 
+//Global State Variables for Cube Controls
+int touch;
+int tiltx;
+int tilty;
+int tiltz;
+int shake;
+// Byte3 tilt 
+// Byte3
+// Byte3
+
 // USB packet counters, available for debugging
 UsbCounters usbCounters;
 
 VideoBuffer vid;
+TiltShakeRecognizer motion;
 
 void onCubeTouch(void *, unsigned);
+void onAccelChange(void *, unsigned);
 void onConnect();
 void onDisconnect();
 
@@ -46,6 +58,7 @@ void main()
     CubeID cube = 0;
     vid.initMode(BG0_ROM);
     vid.attach(cube);
+    motion.attach(cube);
     vid.bg0rom.text(vec(0,0), " USB Demo ", vid.bg0rom.WHITE_ON_TEAL);
 
     // Zero out our counters
@@ -70,6 +83,13 @@ void main()
      * attached before we set up onConnect/onDisconnect.
      */
 
+     //Initialize starting states of globals
+     tiltx = 0;
+     tilty = 0;
+     tiltz = 0;
+     touch = 0;
+     shake = 0;
+
     Events::usbReadAvailable.set(onReadAvailable);
     usbPipe.attach();
     updatePacketCounts(0, 0);
@@ -82,6 +102,7 @@ void main()
     Events::usbConnect.set(onConnect);
     Events::usbDisconnect.set(onDisconnect);
     Events::cubeTouch.set(onCubeTouch);
+    Events::cubeAccelChange.set(onAccelChange);
 
     if (Usb::isConnected()) {
         onConnect();
@@ -109,13 +130,42 @@ void main()
     }
 }
 
+//Event driven state changes
+
 void onCubeTouch(void* ctxt, unsigned id){
     CubeID cube(id);
 
-    LOG("COW goes moo\n");
+    if( cube.isTouching()){
+        touch = 1;
+    } else {
+        touch = 0;
+    }
     // execl('playpause.sh', NULL);
 
 }
+
+void onAccelChange(void* ctxt, unsigned id){
+    CubeID cube(id);
+    
+
+    unsigned changeFlags = motion.update();
+    if(changeFlags) {
+        auto tilt = motion.tilt;
+
+        tiltx = tilt.x;
+        tilty = tilt.y;
+        tiltz = tilt.z;
+
+        shake = motion.shake;
+    }
+
+}
+
+
+
+
+
+//USB CONNECTION
 
 void onConnect()
 {
@@ -280,17 +330,25 @@ void writePacket()
 
         Byte3 accel = vid.physicalAccel();
 
+        //accel
         packet.bytes()[0] = accel.x;
         packet.bytes()[1] = accel.y;
         packet.bytes()[2] = accel.z;
+        //tilt
+        packet.bytes()[3] = tiltx;
+        packet.bytes()[4] = tilty;
+        packet.bytes()[5] = tiltz;
+        packet.bytes()[6] = touch;
+        packet.bytes()[7] = shake;
+
 
         /*
          * Log the packet for debugging, and commit it to the FIFO.
          * The system will asynchronously send it to our peer.
          */
 
-        LOG("Sending: %d bytes, type=%02x, data=%19h\n",
-            packet.size(), packet.type(), packet.bytes());
+        // LOG("Sending: %d bytes, type=%02x, data=%19h\n",
+        //     packet.size(), packet.type(), packet.bytes());
 
         usbPipe.sendQueue.commit();
         updatePacketCounts(1, 0);
