@@ -134,7 +134,7 @@ void main()
 
 void onCubeTouch(void* ctxt, unsigned id){
     CubeID cube(id);
-
+    // LOG("TOUCHING? :: %i\n", cube.isTouching());
     if( cube.isTouching()){
         touch = 1;
     } else {

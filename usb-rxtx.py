@@ -6,6 +6,9 @@
 
 import usb # expects PyUSB (http://pyusb.sourceforge.net) to be installed
 import sys
+import time
+from scripts import * 
+
 
 SIFTEO_VID  = 0x22fa
 BASE_PID    = 0x0105
@@ -16,6 +19,14 @@ INTF        = 0x0
 MAX_PACKET  = 64
 
 USER_SUBSYS = 7
+
+TOUCH_START = 0 #Start Time of Touch
+IS_TOUCHING = 0 #Touch prevstate Flag
+IS_SHAKING = 0 #Shaking prevstate Flag
+IS_TILTING_X = 0 #Tiling X prevstate Flag
+LAST_TAP_TIME = 0 #Time of last tap
+JUST_TAPPED = 0 #Flag for initial touch (to determine if there is a second touch in time)
+CLICK_LATENCY_MAX = .15 #latency difference between registering 1 and 2 clicks
 
 def find_and_open():
     dev = usb.core.find(idVendor = SIFTEO_VID, idProduct = BASE_PID)
@@ -72,10 +83,62 @@ while True:
     send(dev, msg)
 
     type, payload = receive(dev)
-    if len(payload) >= 3:
-        print "accel:", payload[0], payload[1], payload[2]
     if len(payload) >= 7:
-        print "\t tilt:", payload[3], payload[4], payload[5]
-        print "\t touch:", payload[6]
-        print "\t shake:", payload[7]
+        ax = payload[0]
+        ay = payload[1]
+        az = payload[2]
+        tx = payload[3]
+        ty = payload[4]
+        tz = payload[5]
+        tch = payload[6]
+        shk = payload[7]
 
+
+
+########## TOUCH #############
+    #Single tap time timer flag
+    if JUST_TAPPED and time.time() - LAST_TAP_TIME >= CLICK_LATENCY_MAX:
+        playPause()
+        JUST_TAPPED = 0
+
+    #If touched and not touching before
+    if tch and not tch == IS_TOUCHING:
+        #start timer for holding interval
+        TOUCH_START = time.time()
+    #If a short touch
+    if not tch and IS_TOUCHING and time.time() - TOUCH_START < .3:
+        
+        #set single tap flag
+        JUST_TAPPED = 1
+
+        #double Tap touch
+        if time.time() - LAST_TAP_TIME < CLICK_LATENCY_MAX:
+            dialog()
+            JUST_TAPPED = 0  
+
+        LAST_TAP_TIME = time.time()
+    #If a long and tx tilt
+    if tch and time.time() - TOUCH_START >= .3 and not tx == IS_TILTING_X:
+        #if right tilt
+        if tx == 1:
+            nextApplication()
+        #if left tilt
+        if tx == 255:
+            prevApplication()
+
+
+########## Shake #############
+    if shk and not shk == IS_SHAKING:
+        # dialog()
+        pass
+
+########## Accel #############
+
+
+
+########## TILT #############
+
+    IS_TOUCHING = tch
+    IS_SHAKING = shk
+    IS_TILTING_X = tx
+        
