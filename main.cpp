@@ -11,7 +11,7 @@ Metadata M = Metadata()
     .title("USB SDK Example")
     .package("com.sifteo.sdk.usb", "1.0")
     .icon(Icon)
-    .cubeRange(1);
+    .cubeRange(2);
 
 /*
  * When you allocate a UsbPipe you can optionally set the size of its transmit and receive queues.
@@ -32,8 +32,8 @@ int shake;
 // USB packet counters, available for debugging
 UsbCounters usbCounters;
 
-VideoBuffer vid;
-TiltShakeRecognizer motion;
+VideoBuffer vid[2];
+TiltShakeRecognizer motion[2];
 
 void onCubeTouch(void *, unsigned);
 void onAccelChange(void *, unsigned);
@@ -55,11 +55,19 @@ void main()
      * Display text in BG0_ROM mode on Cube 0
      */
 
+     //Main Cube
     CubeID cube = 0;
-    vid.initMode(BG0_ROM);
-    vid.attach(cube);
-    motion.attach(cube);
-    vid.bg0rom.text(vec(0,0), " USB Demo ", vid.bg0rom.WHITE_ON_TEAL);
+    vid[0].initMode(BG0_ROM);
+    vid[0].attach(cube);
+    motion[0].attach(cube);
+    vid[0].bg0rom.text(vec(0,0), " USB Demo ", vid[0].bg0rom.WHITE_ON_TEAL);
+
+    //Secondary Cube
+    CubeID cube2 = 1;
+    vid[1].initMode(BG0_ROM);
+    vid[1].attach(cube2);
+    motion[1].attach(cube2);
+    vid[1].bg0rom.text(vec(0,0), " CUBE 2 TEST", vid[1].bg0rom.WHITE_ON_TEAL);
 
     // Zero out our counters
     usbCounters.reset();
@@ -135,12 +143,15 @@ void main()
 void onCubeTouch(void* ctxt, unsigned id){
     CubeID cube(id);
     // LOG("TOUCHING? :: %i\n", cube.isTouching());
-    if( cube.isTouching()){
-        touch = 1;
-    } else {
-        touch = 0;
+
+    if(int(id) == 0){
+        if( cube.isTouching()){
+            touch = 1;
+        } else {
+            touch = 0;
+        }
     }
-    // execl('playpause.sh', NULL);
+    
 
 }
 
@@ -148,15 +159,15 @@ void onAccelChange(void* ctxt, unsigned id){
     CubeID cube(id);
     
 
-    unsigned changeFlags = motion.update();
+    unsigned changeFlags = motion[0].update();
     if(changeFlags) {
-        auto tilt = motion.tilt;
+        auto tilt = motion[0].tilt;
 
         tiltx = tilt.x;
         tilty = tilt.y;
         tiltz = tilt.z;
 
-        shake = motion.shake;
+        shake = motion[0].shake;
     }
 
 }
@@ -172,9 +183,9 @@ void onConnect()
     LOG("onConnect() called\n");
     ASSERT(Usb::isConnected());
 
-    vid.bg0rom.text(vec(0,2), "   Connected!   ");
-    vid.bg0rom.text(vec(0,3), "                ");
-    vid.bg0rom.text(vec(0,8), " Last received: ");
+    vid[0].bg0rom.text(vec(0,2), "   Connected!   ");
+    vid[0].bg0rom.text(vec(0,3), "                ");
+    vid[0].bg0rom.text(vec(0,8), " Last received: ");
 
     // Start trying to write immediately
     Events::usbWriteAvailable.set(onWriteAvailable);
@@ -186,8 +197,8 @@ void onDisconnect()
     LOG("onDisconnect() called\n");
     ASSERT(!Usb::isConnected());
 
-    vid.bg0rom.text(vec(0,2), " Waiting for a  ");
-    vid.bg0rom.text(vec(0,3), " connection...  ");
+    vid[0].bg0rom.text(vec(0,2), " Waiting for a  ");
+    vid[0].bg0rom.text(vec(0,3), " connection...  ");
 
     // Stop trying to write
     Events::usbWriteAvailable.unset();
@@ -205,11 +216,11 @@ void updatePacketCounts(int tx, int rx)
 
     String<17> str;
     str << "RX: " << rxCount;
-    vid.bg0rom.text(vec(1,6), str);
+    vid[0].bg0rom.text(vec(1,6), str);
 
     str.clear();
     str << "TX: " << txCount;
-    vid.bg0rom.text(vec(1,5), str);
+    vid[0].bg0rom.text(vec(1,5), str);
 }
 
 void packetHexDumpLine(const UsbPacket &packet, String<17> &str, unsigned index)
@@ -265,16 +276,16 @@ void readPacket()
         String<17> str;
 
         str << "len=" << Hex(packet.size(), 2) << " type=" << Hex(packet.type(), 2);
-        vid.bg0rom.text(vec(1,10), str);
+        vid[0].bg0rom.text(vec(1,10), str);
 
         packetHexDumpLine(packet, str, 0);
-        vid.bg0rom.text(vec(0,12), str);
+        vid[0].bg0rom.text(vec(0,12), str);
 
         packetHexDumpLine(packet, str, 8);
-        vid.bg0rom.text(vec(0,13), str);
+        vid[0].bg0rom.text(vec(0,13), str);
 
         packetHexDumpLine(packet, str, 16);
-        vid.bg0rom.text(vec(0,14), str);
+        vid[0].bg0rom.text(vec(0,14), str);
 
         // Update our counters
         updatePacketCounts(0, 1);
@@ -328,7 +339,7 @@ void writePacket()
          * Fill the first 3 bytes with accelerometer data from Cube 0
          */
 
-        Byte3 accel = vid.physicalAccel();
+        Byte3 accel = vid[0].physicalAccel();
 
         //accel
         packet.bytes()[0] = accel.x;
