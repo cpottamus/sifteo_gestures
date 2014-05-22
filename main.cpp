@@ -267,9 +267,6 @@ void readPacket()
          * Dump out its contents in hexadecimal, to the log and the display.
          */
 
-
-         //USE THE CONTENTS HERE FOR SOME COOL BULLSHIT!
-
         LOG("Received: %d bytes, type=%02x, data=%19h\n",
             packet.size(), packet.type(), packet.bytes());
 

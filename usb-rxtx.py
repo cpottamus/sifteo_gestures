@@ -48,7 +48,10 @@ def send(dev, bytes, timeout = 1000):
     # Ensure that our message will be dispatched appropriately by the base.
     # Highest 4 bits specify the subsystem, user subsystem is 7.
     USER_HDR = USER_SUBSYS << 4
+    
+    #WRITE HERE
     msg = [0, 0, 0, USER_HDR]
+    
     msg.extend(bytes)
 
     if len(msg) > MAX_PACKET:
