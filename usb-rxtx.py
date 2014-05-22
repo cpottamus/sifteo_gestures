@@ -23,10 +23,12 @@ USER_SUBSYS = 7
 TOUCH_START = 0 #Start Time of Touch
 IS_TOUCHING = 0 #Touch prevstate Flag
 IS_SHAKING = 0 #Shaking prevstate Flag
-IS_TILTING_X = 0 #Tiling X prevstate Flag
+IS_TILTING_X = 0 #Tilting X prevstate Flag
+IS_TILTING_Y = 0 #Tilting Y prevstate Flag
 LAST_TAP_TIME = 0 #Time of last tap
 JUST_TAPPED = 0 #Flag for initial touch (to determine if there is a second touch in time)
 CLICK_LATENCY_MAX = .15 #latency difference between registering 1 and 2 clicks
+IS_LONG_TOUCHING = 0 #long touch flag
 
 def find_and_open():
     dev = usb.core.find(idVendor = SIFTEO_VID, idProduct = BASE_PID)
@@ -50,9 +52,12 @@ def send(dev, bytes, timeout = 1000):
     USER_HDR = USER_SUBSYS << 4
     
     #WRITE HERE
-    msg = [0, 0, 0, USER_HDR]
+    msg = [1, 25, 30, USER_HDR]
     
     msg.extend(bytes)
+
+    print 'msg :: ', msg
+    print 'msgbytes :: ', msg.extend(bytes)
 
     if len(msg) > MAX_PACKET:
         raise ValueError("msg is too long")
@@ -96,6 +101,16 @@ while True:
         tch = payload[6]
         shk = payload[7]
 
+    if len(payload) >= 15:
+        ax1 = payload[8]
+        ay1 = payload[9]
+        az1 = payload[10]
+        tx1 = payload[11]
+        ty1 = payload[12]
+        tz1 = payload[13]
+        tch1 = payload[14]
+        shk1 = payload[15]
+
 
 
 ########## TOUCH #############
@@ -120,7 +135,16 @@ while True:
             JUST_TAPPED = 0  
 
         LAST_TAP_TIME = time.time()
-    #If a long and tx tilt
+    #If long touch
+    if tch and time.time() - TOUCH_START >= .3:
+        keyDownCommand()
+        IS_LONG_TOUCHING = 1
+
+    #Just finished long touch
+    if not tch and IS_LONG_TOUCHING:
+        keyUpCommand()
+        IS_LONG_TOUCHING = 0
+    #If a long touch and tx tilt
     if tch and time.time() - TOUCH_START >= .3 and not tx == IS_TILTING_X:
         #if right tilt
         if tx == 1:
@@ -128,6 +152,15 @@ while True:
         #if left tilt
         if tx == 255:
             prevApplication()
+
+    #If a long touch and ty tilt
+    if tch and time.time() - TOUCH_START >= .3 and not ty == IS_TILTING_Y:
+        #if up tilt
+        if tx == 1:
+            volumeUp()
+        #if down tilt
+        if tx == 255:
+            volumeDown()
 
 
 ########## Shake #############

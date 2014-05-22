@@ -20,11 +20,11 @@ Metadata M = Metadata()
 UsbPipe <1,4> usbPipe;
 
 //Global State Variables for Cube Controls
-int touch;
-int tiltx;
-int tilty;
-int tiltz;
-int shake;
+int touch0;
+int tiltx0;
+int tilty0;
+int tiltz0;
+int shake0;
 // Byte3 tilt 
 // Byte3
 // Byte3
@@ -92,11 +92,16 @@ void main()
      */
 
      //Initialize starting states of globals
-     tiltx = 0;
-     tilty = 0;
-     tiltz = 0;
-     touch = 0;
-     shake = 0;
+     tiltx0 = 0;
+     tilty0 = 0;
+     tiltz0 = 0;
+     touch0 = 0;
+     shake0 = 0;
+     tiltx1 = 0;
+     tilty1 = 0;
+     tiltz1 = 0;
+     touch1 = 0;
+     shake1 = 0;
 
     Events::usbReadAvailable.set(onReadAvailable);
     usbPipe.attach();
@@ -146,9 +151,17 @@ void onCubeTouch(void* ctxt, unsigned id){
 
     if(int(id) == 0){
         if( cube.isTouching()){
-            touch = 1;
+            touch0 = 1;
         } else {
-            touch = 0;
+            touch0 = 0;
+        }
+    }
+
+    if(int(id) == 1){
+        if( cube.isTouching()){
+            touch1 = 1;
+        } else {
+            touch1 = 0;
         }
     }
     
@@ -163,11 +176,22 @@ void onAccelChange(void* ctxt, unsigned id){
     if(changeFlags) {
         auto tilt = motion[0].tilt;
 
-        tiltx = tilt.x;
-        tilty = tilt.y;
-        tiltz = tilt.z;
+        tiltx0 = tilt.x;
+        tilty0 = tilt.y;
+        tiltz0 = tilt.z;
 
-        shake = motion[0].shake;
+        shake0 = motion[0].shake;
+    }
+
+    unsigned changeFlags1 = motion[1].update();
+    if(changeFlags) {
+        auto tilt1 = motion[1].tilt;
+
+        tiltx1 = tilt1.x;
+        tilty1 = tilt1.y;
+        tiltz1 = tilt1.z;
+
+        shake1 = motion[1].shake;
     }
 
 }
@@ -273,6 +297,12 @@ void readPacket()
         String<17> str;
 
         str << "len=" << Hex(packet.size(), 2) << " type=" << Hex(packet.type(), 2);
+        
+
+        //IF TYPE == x, display icon x
+
+
+
         vid[0].bg0rom.text(vec(1,10), str);
 
         packetHexDumpLine(packet, str, 0);
@@ -336,6 +366,8 @@ void writePacket()
          * Fill the first 3 bytes with accelerometer data from Cube 0
          */
 
+        ///// Cube 0 //////
+
         Byte3 accel = vid[0].physicalAccel();
 
         //accel
@@ -343,12 +375,26 @@ void writePacket()
         packet.bytes()[1] = accel.y;
         packet.bytes()[2] = accel.z;
         //tilt
-        packet.bytes()[3] = tiltx;
-        packet.bytes()[4] = tilty;
-        packet.bytes()[5] = tiltz;
-        packet.bytes()[6] = touch;
-        packet.bytes()[7] = shake;
+        packet.bytes()[3] = tiltx0;
+        packet.bytes()[4] = tilty0;
+        packet.bytes()[5] = tiltz0;
+        packet.bytes()[6] = touch0;
+        packet.bytes()[7] = shake0;
 
+        ///// Cube 1 //////
+
+        Byte3 accel1 = vid[1].physicalAccel();
+
+        //accel
+        packet.bytes()[8] = accel1.x;
+        packet.bytes()[9] = accel1.y;
+        packet.bytes()[10] = accel1.z;
+        //tilt
+        packet.bytes()[11] = tiltx1;
+        packet.bytes()[12] = tilty1;
+        packet.bytes()[13] = tiltz1;
+        packet.bytes()[14] = touch1;
+        packet.bytes()[15] = shake1;
 
         /*
          * Log the packet for debugging, and commit it to the FIFO.

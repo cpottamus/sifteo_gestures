@@ -1,0 +1,9 @@
+-presentation app
+-potential collaborative work tool
+-physical file transfer
+-collaborative drawing
+-collaborative action (all shake at once)
+-play sounds for better feedback.	
+-passive workflow commands (cmd+s, switch app)
+	-start context-dependent, make the workflow for one application much easier
+-context states (if cube is active -- what should be activated, if cube is stationary -- what changes.)
