@@ -25,6 +25,12 @@ int tiltx0;
 int tilty0;
 int tiltz0;
 int shake0;
+
+int touch1;
+int tiltx1;
+int tilty1;
+int tiltz1;
+int shake1;
 // Byte3 tilt 
 // Byte3
 // Byte3
@@ -157,7 +163,8 @@ void onCubeTouch(void* ctxt, unsigned id){
         }
     }
 
-    if(int(id) == 1){
+    // if(int(id) == 1){
+    else{
         if( cube.isTouching()){
             touch1 = 1;
         } else {
@@ -184,7 +191,7 @@ void onAccelChange(void* ctxt, unsigned id){
     }
 
     unsigned changeFlags1 = motion[1].update();
-    if(changeFlags) {
+    if(changeFlags1) {
         auto tilt1 = motion[1].tilt;
 
         tiltx1 = tilt1.x;
