@@ -13,7 +13,7 @@
 
 
 -Include sounds for each action
--Rig up Visual assets for cubes (2nd cube in particular -- using the message being sent back)
+-Rig up Visual assets for cubes (2nd cube in particular -- using the message being sent back) -- As menu?
 -Movement/accel tracking
 
 
