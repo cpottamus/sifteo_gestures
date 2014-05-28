@@ -106,7 +106,7 @@ while True:
         ay1 = payload[9]
         az1 = payload[10]
         tx1 = payload[11]
-        ty1 = payload[12]
+        ty1 = payload[12]   
         tz1 = payload[13]
         tch1 = payload[14]
         shk1 = payload[15]
@@ -144,6 +144,7 @@ while True:
     if not tch and IS_LONG_TOUCHING:
         keyUpCommand()
         IS_LONG_TOUCHING = 0
+        app = currApp()
     #If a long touch and tx tilt
     if tch and time.time() - TOUCH_START >= .3 and not tx == IS_TILTING_X:
         #if right tilt

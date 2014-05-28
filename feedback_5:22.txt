@@ -7,3 +7,18 @@
 -passive workflow commands (cmd+s, switch app)
 	-start context-dependent, make the workflow for one application much easier
 -context states (if cube is active -- what should be activated, if cube is stationary -- what changes.)
+
+
+
+
+
+-Include sounds for each action
+-Rig up Visual assets for cubes (2nd cube in particular -- using the message being sent back)
+-Movement/accel tracking
+
+
+-drawing??
+	-http://intridea.github.io/sketch.js/
+-presentation
+-
+
