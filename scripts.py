@@ -6,7 +6,41 @@ from applescript import AppleScript, AEType
 ####################################
 
 ## Help dialog
-def dialog():
+
+
+def helpMenuMusic():
+	scpt = AppleScript('''
+		tell application (path to frontmost application as text)
+			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+		end tell
+	''')
+	scpt.run()
+
+def helpMenuMouse():
+	scpt = AppleScript('''
+		tell application (path to frontmost application as text)
+			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+		end tell
+	''')
+	scpt.run()
+
+def helpMenuEarth():
+	scpt = AppleScript('''
+		tell application (path to frontmost application as text)
+			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+		end tell
+	''')
+	scpt.run()
+
+def helpMenuPaint():
+	scpt = AppleScript('''
+		tell application (path to frontmost application as text)
+			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+		end tell
+	''')
+	scpt.run()
+
+def helpMenuChrome():
 	scpt = AppleScript('''
 		tell application (path to frontmost application as text)
 			display dialog "Possible motions:\nTilt, Shake, Move, Tap"

@@ -53,6 +53,10 @@ Carson
 For Thursday:
 ------------
 -Mouse functionality
+	-touch shake to expose
+	-touch tilt to switch applications
+	-
 -Visual Assets
 -Make help menus
 -Google Earth / SketchJS
+-Google Chrome (scrolling by tilting, going back/forward using tracking)

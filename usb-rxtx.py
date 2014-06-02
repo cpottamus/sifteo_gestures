@@ -144,7 +144,7 @@ while True:
 
         #double Tap touch
         if time.time() - LAST_TAP_TIME < CLICK_LATENCY_MAX:
-            dialog()
+            helpMenuMouse()
             JUST_TAPPED = 0  
 
         LAST_TAP_TIME = time.time()
