@@ -126,15 +126,10 @@ def volumeDown():
 
 # Show notification (doesn't work)
 def overlay():
-	scpt = AppleScript('''		
-		--on run {arg1, arg2}
-		--	do shell script "osascript -e 'display notification arg1 with title arg2'"
-		--end run
-		on run {arg1, arg2}
-            do shell script "arg1='HI'; arg2='YES';osascript -e 'display notification arg1 with title arg2'"
-        end run
+	scpt = AppleScript('''				
+		display notification "HI SCOTT"
 	''')
-	scpt.run('Python', 'Calling')
+	scpt.run()
 
 def mute():
 	scpt = AppleScript('''				
@@ -176,6 +171,12 @@ def prevTrack():
     tellItunes('previous track')
     playSoundEffect('Blow')
 
+def fastFoward():
+	tellItunes('set player position to (player position + 10)')
+
+def rewind():
+	tellItunes('set player position to (player position - 10)')
+
 def shuffle():
 	scpt = AppleScript('''
 		tell application "System Events" 
@@ -213,3 +214,22 @@ def demoApplicationSwitching():
 	prevApplication()
 	delay()
 	keyUpCommand()
+
+def demoVolume():
+	volumeUp()
+	volumeUp()
+	volumeUp()
+	volumeUp()
+	volumeUp()
+	volumeUp()
+	volumeUp()
+	volumeDown()
+	volumeDown()
+	volumeDown()
+	volumeDown()
+	volumeDown()
+	volumeDown()
+	volumeDown()
+
+# demoApplicationSwitching()
+# demoVolume()

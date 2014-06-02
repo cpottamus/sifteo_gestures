@@ -22,7 +22,7 @@ USER_SUBSYS = 7
 
 CURR_APP = currApp()
 
-CLICK_LATENCY_MAX = .15 #latency difference between registering 1 and 2 clicks
+CLICK_LATENCY_MAX = .17 #latency difference between registering 1 and 2 clicks
 
 # Cube 1
 TOUCH_START = 0 #Start Time of Touch
@@ -43,6 +43,13 @@ IS_TILTING_Y_1 = 0 #Tilting Y prevstate Flag
 LAST_TAP_TIME_1 = 0 #Time of last tap
 JUST_TAPPED_1 = 0 #Flag for initial touch (to determine if there is a second touch in time)
 IS_LONG_TOUCHING_1 = 0 #long touch flag
+ACCEL_X_START_1 = 0 #Accel x start time
+
+# Resign an unsigned int
+def resign(x):
+    if x > 127:
+        return x - 256
+    return x
 
 def find_and_open():
     dev = usb.core.find(idVendor = SIFTEO_VID, idProduct = BASE_PID)
@@ -106,84 +113,94 @@ while True:
 
     type, payload = receive(dev)    
     if len(payload) >= 7:
-        ax = payload[0]
-        ay = payload[1]
-        az = payload[2]
-        tx = payload[3]
-        ty = payload[4]
+        ax = resign(payload[0])
+        ay = resign(payload[1])
+        az = resign(payload[2])
+        tx = resign(payload[3])
+        ty = resign(payload[4])
         tz = payload[5]
         tch = payload[6]
         shk = payload[7]
 
     if len(payload) >= 15:
-        ax1 = payload[8]
-        ay1 = payload[9]
-        az1 = payload[10]
-        tx1 = payload[11]
-        ty1 = payload[12]   
-        tz1 = payload[13]
+        ax1 = resign(payload[8])
+        ay1 = resign(payload[9])
+        az1 = resign(payload[10])
+        tx1 = resign(payload[11])
+        ty1 = resign(payload[12])
+        tz1 = resign(payload[13])
         tch1 = payload[14]
         shk1 = payload[15]
 
+        # print "ax1: " + str(ax1)
+        # print "ay1: " + str(ay1)
+        print "az1: " + str(az1)
 
 ########## TOUCH #############
-    #Single tap time timer flag
+
+    # If tapped and not touching before
+    if tch and not IS_TOUCHING:
+        # Start timer for holding interval
+        TOUCH_START = time.time()
+
+    # If a short tap (just removed finger and the tap was short)
+    if not tch and IS_TOUCHING and time.time() - TOUCH_START < .3:
+
+        # Set tap flag
+        JUST_TAPPED = 1
+
+        # Detect double tap (this tap came almost immediately after last tap)
+        if time.time() - LAST_TAP_TIME < CLICK_LATENCY_MAX:            
+            JUST_TAPPED = 0  
+
+        LAST_TAP_TIME = time.time()
+
+    # If a single tap (just tapped and enough time has passed for it to not be a double tap)
     if JUST_TAPPED and time.time() - LAST_TAP_TIME >= CLICK_LATENCY_MAX:
         playPause()
         JUST_TAPPED = 0
 
-    #If touched and not touching before
-    if tch and not tch == IS_TOUCHING:
-        #start timer for holding interval
-        TOUCH_START = time.time()
-    #If a short touch
-    if not tch and IS_TOUCHING and time.time() - TOUCH_START < .3:
-        
-        #set single tap flag
-        JUST_TAPPED = 1
-
-        #double Tap touch
-        if time.time() - LAST_TAP_TIME < CLICK_LATENCY_MAX:
-            dialog()
-            JUST_TAPPED = 0  
-
-        LAST_TAP_TIME = time.time()
-    #If long touch
+    # If long touch (still holding down and have been for awhile)
     if tch and time.time() - TOUCH_START >= .3:
         keyDownCommand()
         IS_LONG_TOUCHING = 1
 
-    #Just finished long touch
+    # Just finished long touch
     if not tch and IS_LONG_TOUCHING:
         keyUpCommand()
         IS_LONG_TOUCHING = 0
         CURR_APP = currApp()
-    #If a long touch and tx tilt
-    if tch and time.time() - TOUCH_START >= .3 and not tx == IS_TILTING_X:
-        #if right tilt
+
+########## TILT #############
+
+    # Currently long touching and new tx tilt
+    if IS_LONG_TOUCHING and not tx == IS_TILTING_X:
+
+        # If right tilt
         if tx == 1:
             nextApplication()
-        #if left tilt
-        if tx == 255:
+        # If left tilt
+        if tx == -1:
             prevApplication()
 
-    #If a long touch and ty tilt
-    if tch and time.time() - TOUCH_START >= .3 and not ty == IS_TILTING_Y:
-        #if up tilt
+    # Currently long touching and new ty tilt
+    if IS_LONG_TOUCHING and not ty == IS_TILTING_Y:
+
+        # If up tilt
         if tx == 1:
             volumeUp()
-        #if down tilt
-        if tx == 255:
+        # If down tilt
+        if tx == -1:
             volumeDown()
 
 
 ########## Shake #############
-    if shk and not shk == IS_SHAKING:
-        # dialog()
-        pass
+
+    # New shake while not long touching
+    if shk and not IS_SHAKING and not IS_LONG_TOUCHING:
+        dialog()
 
 ########## Accel #############
-
 
 
 ########## Update Variables #############
@@ -201,7 +218,6 @@ while True:
         if tch1 and not IS_TOUCHING_1:
             # Start timer for holding interval
             TOUCH_START_1 = time.time()
-            IS_TOUCHING_1 = True
         
         # If a short tap (just removed finger and the tap was short)
         if not tch1 and IS_TOUCHING_1 and time.time() - TOUCH_START_1 < .3:
@@ -231,31 +247,42 @@ while True:
 
         ########## TILT #############     
 
-        # Currently long touching and new tx tilt
-        if IS_LONG_TOUCHING_1 and tx1 and not IS_TILTING_X_1:
+        # Currently long touching and new tx tilt (added z tilt check to make sure tilting instead of accelerating)
+        if IS_LONG_TOUCHING_1 and tx1 and not IS_TILTING_X_1 and az1 < 40:
 
             # If right tilt
             if tx1 == 1:
                 nextTrack()
             # If left tilt
-            if tx1 == 255:
+            if tx1 == -1:
                 prevTrack()
 
-        # Currently long touching and new ty tilt
-        if IS_LONG_TOUCHING_1 and ty1 and not IS_TILTING_Y_1:
+        # Currently long touching and new ty tilt (added z tilt check to make sure tilting instead of accelerating)
+        if IS_LONG_TOUCHING_1 and ty1 and not IS_TILTING_Y_1 and az1 < 40:
 
             # If up tilt
             if ty1 == 1:
                 volumeDown()
             # If down tilt
-            if ty1 == 255:
+            if ty1 == -1:
                 volumeUp()
 
         ########## SHAKE #############
 
-        # Currently long touching and new shake (GETS CONFUSED WITH LONG TOUCH AND TILT)
-        if IS_LONG_TOUCHING_1 and shk1 and not IS_SHAKING_1:
-            shuffle()            
+        # New shake while not long touching
+        if shk1 and not IS_SHAKING_1 and not IS_LONG_TOUCHING_1:
+            dialog()            
+
+        ########## ACCEL #############
+
+        # New move right and is long touching
+        if ax1 < -60 and time.time() - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
+            fastFoward()
+            ACCEL_X_START_1 = time.time()
+        # New move left and is long touching
+        elif ax1 > 60 and time.time() - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
+            rewind()
+            ACCEL_X_START_1 = time.time()
 
         ########## UPDATE VARIABLES #############  
         IS_TOUCHING_1 = tch1
