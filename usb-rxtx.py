@@ -151,6 +151,7 @@ while True:
 
         # Detect double tap (this tap came almost immediately after last tap)
         if time.time() - LAST_TAP_TIME < CLICK_LATENCY_MAX:            
+            helpMenuMouse()
             JUST_TAPPED = 0  
 
         LAST_TAP_TIME = time.time()

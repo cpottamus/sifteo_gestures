@@ -13,7 +13,7 @@
 
 
 -Include sounds for each action
--Rig up Visual assets for cubes (2nd cube in particular -- using the message being sent back)
+-Rig up Visual assets for cubes (2nd cube in particular -- using the message being sent back) -- As menu?
 -Movement/accel tracking
 
 
@@ -22,3 +22,41 @@
 -presentation
 -
 
+
+Sam
+----
+-Finish music
+-Add sounds
+
+
+Carson
+----
+-visual assets
+-support for multiple helper cube functions (so that you can choose between the apps and it switches logic)
+
+
+
+
+-As mouse
+-Enhancing Mouse
+-Separate From Mouse
+-3-dimensional manipulation/Gesture-heavy interaction
+
+-Music (separate from mouse)
+-Mouse (as mouse)
+-Drawing (as gesture based)
+-Maybe google earth as 3-dimensional, or some other manipulation
+-maybe a game we could play with the cubes
+-What Mouse + workflow enhanced game
+
+
+For Thursday:
+------------
+-Mouse functionality
+	-touch shake to expose
+	-touch tilt to switch applications
+	-
+-Visual Assets
+-Make help menus
+-Google Earth / SketchJS
+-Google Chrome (scrolling by tilting, going back/forward using tracking)

@@ -73,7 +73,8 @@ void main()
     vid[1].initMode(BG0_ROM);
     vid[1].attach(cube2);
     motion[1].attach(cube2);
-    vid[1].bg0rom.text(vec(0,0), " CUBE 2 TEST", vid[1].bg0rom.WHITE_ON_TEAL);
+    // vid[1].bg0rom.text(vec(0,0), " CUBE 2 TEST", vid[1].bg0rom.WHITE_ON_TEAL);
+
 
     // Zero out our counters
     usbCounters.reset();
@@ -306,7 +307,11 @@ void readPacket()
         str << "len=" << Hex(packet.size(), 2) << " type=" << Hex(packet.type(), 2);
         
 
-        //IF TYPE == x, display icon x
+        // //IF TYPE == x, display icon x
+        // if(packet.type() == 1){
+        //     vid[1].initMode(BG0_SPR_BG1);
+        //     vid[1].bg0.image(vec(0,0), Backgrounds, currentApp[0]);
+        // }
 
 
 
