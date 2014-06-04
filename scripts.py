@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from applescript import AppleScript, AEType
+import os
 
 ####################################
 ##          System Level          ##
@@ -123,7 +124,6 @@ def keyUpCommand():
 		end tell
 	''')
 	scpt.run()
-	playSoundEffect('Blow')
 
 ## A string of the current app's name
 def currApp():
@@ -223,15 +223,13 @@ def mute():
 ##             Mouse              ##
 ####################################
 def cliclick(argument):
-	scpt = AppleScript('do shell script "cliclick ' + argument + '"')
-	scpt.run()
+	os.system('cliclick ' + argument)
 
 def click():
 	cliclick('c:.')
 
 def move(xDiff, yDiff):
 	cliclick('m:' + xDiff + ',' + yDiff)
-	print "move"
 
 ####################################
 ##         Google Earth           ##
@@ -254,24 +252,39 @@ def typeIntoConsole(string):
 	scpt.run()
 	scpt2.run()
 
+# Figure out on-screen coordinates for controls for direction
+def getCoordsForDirection(direction):
+	if direction == 'up':
+		return '563,229'
+	elif direction == 'left':
+		return '548,246'
+	elif direction == 'down':
+		return '563,264'
+	elif direction == 'right':
+		return '580,246'
+
 # Pan
 def pan(direction):
-	getInEarth()
+	coords = getCoordsForDirection(direction)
 
-	scpt = AppleScript('''
-		tell application "System Events" 
-			key down "%s arrow"
-		end tell
-		''' % direction)	
-	scpt.run()
+	os.system('cliclick dd:' + coords)
 
 def endPan(direction):
-	scpt = AppleScript('''
-		tell application "System Events" 
-			key up "%s arrow"
-		end tell
-		''' % direction)
-	scpt.run()
+	os.system('cliclick du:.')
+
+def zoomIn():
+	typeIntoConsole('''
+		var lookAt = ge.getView().copyAsLookAt(ge.ALTITUDE_RELATIVE_TO_GROUND);
+		lookAt.setRange(lookAt.getRange() * 0.8);
+		ge.getView().setAbstractView(lookAt);
+	''')
+
+def zoomOut():
+	typeIntoConsole('''
+			var lookAt = ge.getView().copyAsLookAt(ge.ALTITUDE_RELATIVE_TO_GROUND);
+			lookAt.setRange(lookAt.getRange() * 1.2);
+			ge.getView().setAbstractView(lookAt);
+		''')
 
 ####################################
 ##              Test              ##
@@ -319,8 +332,6 @@ def demoVolume():
 	volumeDown()
 
 def demoPan():
-	pan('left')
+	pan('down')
 	delay()
-	endPan('left')
-
-# demoPan()
+	endPan('down')

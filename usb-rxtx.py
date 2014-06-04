@@ -21,6 +21,7 @@ MAX_PACKET  = 64
 
 USER_SUBSYS = 7
 
+global CURR_APP
 CURR_APP = currApp()
 
 CLICK_LATENCY_MAX = .17 #latency difference between registering 1 and 2 clicks
@@ -45,6 +46,7 @@ LAST_TAP_TIME_1 = 0 #Time of last tap
 JUST_TAPPED_1 = 0 #Flag for initial touch (to determine if there is a second touch in time)
 IS_LONG_TOUCHING_1 = 0 #long touch flag
 ACCEL_X_START_1 = 0 #Accel x start time
+ACCEL_Z_START_1 = 0 #Accel z start time
 TILT_DIRECTION_1 = '' #Tilt direction
 
 # Resign an unsigned int
@@ -170,10 +172,12 @@ while True:
         IS_LONG_TOUCHING = 1
 
     # Just finished long touch
-    if not tch and IS_LONG_TOUCHING:
+    if not tch and IS_LONG_TOUCHING:        
         keyUpCommand()
-        IS_LONG_TOUCHING = 0
         CURR_APP = currApp()
+        playSoundEffect('Blow')
+        IS_LONG_TOUCHING = 0
+        print CURR_APP
 
 ########## TILT #############
 
@@ -211,8 +215,8 @@ while True:
 
     # Not long holding
     if not IS_LONG_TOUCHING and (abs(ax) > 10 or abs(ay) > 10):
-        ax /= 100 # Change signs because ???
-        ay /= 100 # Change signs because ???
+        ax /= 2 # Make less sensitive
+        ay /= 2 # Make less sensitive
         xDiff = str(ax) if ax < 0 else '+'+str(ax) # Set to '-ax' or '+ax'
         yDiff = str(ay) if ay < 0 else '+'+str(ay) # Set to '-ay' or '+ay'
         # move(xDiff, yDiff)
@@ -227,6 +231,7 @@ while True:
     IS_SHAKING = shk
         
 ########## Cube 2 #############
+    
     if CURR_APP == 'iTunes':
         ########## TAP #############
 
@@ -309,16 +314,14 @@ while True:
     # Google Earth
     elif CURR_APP == 'Google Chrome':
         ########## TAP #############
-
+        # print "chrome"
         # If tapped and not touching before
         if tch1 and not IS_TOUCHING_1:
             # Start timer for holding interval
-            print 'starttouch'
             TOUCH_START_1 = now
         
         # If a short tap (just removed finger and the tap was short)
         if not tch1 and IS_TOUCHING_1 and now - TOUCH_START_1 < .3:
-            print 'tap'
             # Set tap flag
             JUST_TAPPED_1 = 1
 
@@ -342,8 +345,9 @@ while True:
 
         ########## TILT #############     
 
-        # Currently long touching and new tx tilt (added z tilt check to make sure tilting instead of accelerating)
-        if IS_LONG_TOUCHING_1 and tx1 and not IS_TILTING_X_1 and az1 < 40:
+        # Currently long touching and tx tilt        
+        if IS_LONG_TOUCHING_1 and tx1:
+            print 'xtilt'
 
             # If right tilt
             if tx1 == 1:
@@ -354,9 +358,9 @@ while True:
                 pan('left')
                 TILT_DIRECTION_1 = 'left'
 
-        # Currently long touching and new ty tilt (added z tilt check to make sure tilting instead of accelerating)
-        if IS_LONG_TOUCHING_1 and ty1 and not IS_TILTING_Y_1 and az1 < 40:
-
+        # Currently long touching and ty tilt
+        if IS_LONG_TOUCHING_1 and ty1:
+            print 'ytilt'
             # If up tilt
             if ty1 == 1:
                 pan('down')
@@ -366,8 +370,8 @@ while True:
                 pan('up')
                 TILT_DIRECTION_1 = 'up'
 
-        # Just stopped tilt
-        if (not tx1 and IS_TILTING_X_1) or (not ty1 and IS_TILTING_Y_1):
+        # Just stopped tilt, or just stopped long touch while tilting
+        if (not tx1 and IS_TILTING_X_1) or (not ty1 and IS_TILTING_Y_1) or ((IS_TILTING_X_1 or IS_TILTING_Y_1) and not IS_LONG_TOUCHING_1):
             endPan(TILT_DIRECTION_1)
 
         ########## SHAKE #############
@@ -384,6 +388,16 @@ while True:
         # New move left and is long touching
         elif ax1 > 60 and now - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
             ACCEL_X_START_1 = now
+
+        if az1 > 70 and now - ACCEL_Z_START_1 > .8 and IS_LONG_TOUCHING_1:
+            ACCEL_Z_START_1 = now
+            zoomOut()
+            print 'Zoom out'
+
+        elif az1 < 40 and now - ACCEL_Z_START_1 > .8 and IS_LONG_TOUCHING_1:
+            ACCEL_Z_START_1 = now
+            zoomIn()
+            print 'Zoom in'
 
         ########## UPDATE VARIABLES #############  
         IS_TOUCHING_1 = tch1
