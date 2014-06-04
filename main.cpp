@@ -35,6 +35,8 @@ int shake1;
 // Byte3
 // Byte3
 
+int currentVisual;
+
 // USB packet counters, available for debugging
 UsbCounters usbCounters;
 
@@ -75,7 +77,7 @@ void main()
     motion[1].attach(cube2);
     // vid[1].bg0rom.text(vec(0,0), " CUBE 2 TEST", vid[1].bg0rom.WHITE_ON_TEAL);
 
-
+    currentVisual = 0;
     // Zero out our counters
     usbCounters.reset();
 
@@ -215,9 +217,11 @@ void onConnect()
     LOG("onConnect() called\n");
     ASSERT(Usb::isConnected());
 
-    vid[0].bg0rom.text(vec(0,2), "   Connected!   ");
-    vid[0].bg0rom.text(vec(0,3), "                ");
-    vid[0].bg0rom.text(vec(0,8), " Last received: ");
+    // vid[0].bg0rom.text(vec(0,2), "   Connected!   ");
+    // vid[0].bg0rom.text(vec(0,3), "                ");
+    // vid[0].bg0rom.text(vec(0,8), " Last received: ");
+    vid[0].bg0rom.text(vec(1,14), 'Shake me for help!');
+    vid[1].bg0rom.text(vec(1,14), 'Shake me for help!');
 
     // Start trying to write immediately
     Events::usbWriteAvailable.set(onWriteAvailable);
@@ -246,13 +250,13 @@ void updatePacketCounts(int tx, int rx)
     txCount += tx;
     rxCount += rx;
 
-    String<17> str;
-    str << "RX: " << rxCount;
-    vid[0].bg0rom.text(vec(1,6), str);
+    // String<17> str;
+    // str << "RX: " << rxCount;
+    // vid[0].bg0rom.text(vec(1,6), str);
 
-    str.clear();
-    str << "TX: " << txCount;
-    vid[0].bg0rom.text(vec(1,5), str);
+    // str.clear();
+    // str << "TX: " << txCount;
+    // vid[0].bg0rom.text(vec(1,5), str);
 }
 
 void packetHexDumpLine(const UsbPacket &packet, String<17> &str, unsigned index)
@@ -303,8 +307,9 @@ void readPacket()
             packet.size(), packet.type(), packet.bytes());
 
         String<17> str;
+        String<17> str1;
 
-        str << "len=" << Hex(packet.size(), 2) << " type=" << Hex(packet.type(), 2);
+        // str << "len=" << Hex(packet.size(), 2) << " type=" << Hex(packet.type(), 2);
         
 
         // //IF TYPE == x, display icon x
@@ -313,18 +318,83 @@ void readPacket()
         //     vid[1].bg0.image(vec(0,0), Backgrounds, currentApp[0]);
         // }
 
-
+        int PACKET_VALUE = packet.type();
+        if(PACKET_VALUE != currentVisual){
+            str.clear();
+            str1.clear();
+            currentVisual = PACKET_VALUE;
+            //IF TYPE == x, display icon x
+            if(PACKET_VALUE == 1){
+                //cursor + no app
+                str << "MOUSE";
+                str1 << "APP not supported";
+            } else if(PACKET_VALUE == 2){
+                //cursor + itunes
+                str << "MOUSE";
+                str1 << "iTunes";
+            } else if(PACKET_VALUE == 3){
+                //cursor + paintbrush
+                str << "MOUSE";
+                str1 << "Paintbrush";
+            } else if(PACKET_VALUE == 4){
+                //cursor + gEarth
+                str << "MOUSE";
+                str1 << "Google Earth";
+            } else if(PACKET_VALUE == 5){
+                //itunes + play
+                str << "iTunes";
+                str1 << "Play";
+            } else if(PACKET_VALUE == 6){
+                //itunes + pause
+                str << "iTunes";
+                str1 << "Pause";
+            } else if(PACKET_VALUE == 7){
+                //itunes + FF
+                str << "iTunes";
+                str1 << "FastForward";
+            } else if(PACKET_VALUE == 8){
+                //itunes + rewind
+                str << "iTunes";
+                str1 << "Rewind";
+            } else if(PACKET_VALUE == 9){
+                //itunes + next track
+                str << "iTunes";
+                str1 << "Next Track";
+            } else if(PACKET_VALUE == 10){
+                //itunes + previous track
+                str << "iTunes";
+                str1 << "Previous Track";
+            } else if(PACKET_VALUE == 11){
+                //itunes + shuffle
+                str << "iTunes";
+                str1 << "Shuffle";
+            } else if(PACKET_VALUE == 12){
+                //itunes + volumeUp
+                str << "iTunes";
+                str1 << "Volume Up";
+            } else if(PACKET_VALUE == 13){
+                //itunes + volumeDown
+                str << "iTunes";
+                str1 << "Volume Down";
+            } else if(PACKET_VALUE == 14){
+                //paintbrush + color change
+                /////TO DO -- update color states here...////
+                str << "Paintbrush";
+                str1 << "Brush Change!";
+            }
+        }
 
         vid[0].bg0rom.text(vec(1,10), str);
+        vid[1].bg0rom.text(vec(1,10), str);
 
-        packetHexDumpLine(packet, str, 0);
-        vid[0].bg0rom.text(vec(0,12), str);
+        // packetHexDumpLine(packet, str, 0);
+        // vid[0].bg0rom.text(vec(0,12), str);
 
-        packetHexDumpLine(packet, str, 8);
-        vid[0].bg0rom.text(vec(0,13), str);
+        // packetHexDumpLine(packet, str, 8);
+        // vid[0].bg0rom.text(vec(0,13), str);
 
-        packetHexDumpLine(packet, str, 16);
-        vid[0].bg0rom.text(vec(0,14), str);
+        // packetHexDumpLine(packet, str, 16);
+        // vid[0].bg0rom.text(vec(0,14), str);
 
         // Update our counters
         updatePacketCounts(0, 1);
