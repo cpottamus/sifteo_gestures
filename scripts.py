@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from applescript import AppleScript, AEType
 import os
+import subprocess
 
 ####################################
 ##          System Level          ##
@@ -19,7 +20,7 @@ def helpMenuMusic():
 def helpMenuMouse():
 	scpt = AppleScript('''
 		tell application (path to frontmost application as text)
-			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+			display dialog "Possible motions:\nWhile Holding Touch: Tilt up/down for dashboard commands.\nTilt left/right to switch applications.\nWithout touch: move to mouse around! Tap/double tap to click/double-click."
 		end tell
 	''')
 	scpt.run()
@@ -27,7 +28,7 @@ def helpMenuMouse():
 def helpMenuEarth():
 	scpt = AppleScript('''
 		tell application (path to frontmost application as text)
-			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+			display dialog "Possible motions:\nWhile Holding Touch: Tilt to move around, move vertically to zoom."
 		end tell
 	''')
 	scpt.run()
@@ -135,17 +136,11 @@ def currApp():
 
 ## Play Sound Effect
 def playSoundEffect(sound):
-	scpt = AppleScript('''
-		do shell script "afplay /System/Library/Sounds/''' + sound + '''.aiff"
-	''')
-	scpt.run()
+	os.system('afplay /System/Library/Sounds/' + sound + '.aiff')
 
 # Trigger the volume sound (note: it's included in this directory because the one in the OS is too long and causes blocking)
 def playVolumeSound():
-	scpt = AppleScript('''
-		do shell script "afplay volume.aiff"
-	''')
-	scpt.run()
+	os.system('afplay volume.aiff')
 
 # Show notification (doesn't work)
 def overlay():
@@ -231,18 +226,79 @@ def click():
 def move(xDiff, yDiff):
 	cliclick('m:' + xDiff + ',' + yDiff)
 
+
+####################################
+##           Drawing!             ##
+####################################
+def getCurrPos():
+	sysOut = subprocess.Popen('cliclick p', stdout=subprocess.PIPE, shell=True)
+	(pos, err) = sysOut.communicate()
+	pos = [int(s) for s in pos.replace(","," ").split() if s.isdigit()]
+	return pos
+
+def draw(xDiff, yDiff):
+	#Have logic here preventing moving outside of x = [443, 1241] and y [180, 978]
+	#if(inside boundaries)
+	cliclick('d:' + xDiff + ',' + yDiff)
+
+def chooseRed():
+	p = getCurrPos();
+	os.system('cliclick c:483,150 m:'+p[0]+','+p[1])
+
+def chooseYellow():
+	p = getCurrPos();
+	os.system('cliclick c:548,150 m:'+p[0]+','+p[1])
+
+def chooseGreen():
+	p = getCurrPos();
+	os.system('cliclick c:615,150 m:'+p[0]+','+p[1])
+
+def chooseLightBlue():
+	p = getCurrPos();
+	os.system('cliclick c:680,150 m:'+p[0]+','+p[1])
+
+def chooseRoyalBlue():
+	p = getCurrPos();
+	os.system('cliclick c:745,150 m:'+p[0]+','+p[1])
+
+def choosePink():
+	p = getCurrPos();
+	os.system('cliclick c:815,150 m:'+p[0]+','+p[1])
+
+def chooseBlack():
+	p = getCurrPos();
+	os.system('cliclick c:877,150 m:'+p[0]+','+p[1])
+
+def chooseWhite():
+	p = getCurrPos();
+	os.system('cliclick c:945,150 m:'+p[0]+','+p[1])
+
+def choose3():
+	p = getCurrPos();
+	os.system('cliclick c:1010,150 m:'+p[0]+','+p[1])
+
+def choose5():
+	p = getCurrPos();
+	os.system('cliclick c:1075,150 m:'+p[0]+','+p[1])
+
+def choose10():
+	p = getCurrPos();
+	os.system('cliclick c:1145,150 m:'+p[0]+','+p[1])
+
+def choose15():
+	p = getCurrPos();
+	os.system('cliclick c:1200x,150 m:'+p[0]+','+p[1])
+
 ####################################
 ##         Google Earth           ##
 ####################################
 # Click in the console
 def getInConsole():
-	scpt = AppleScript('do shell script "cliclick c:20,700"')
-	scpt.run()
+	os.system('cliclick c:20,700')
 
 # Click in Google Earth div
 def getInEarth():
-	scpt = AppleScript('do shell script "cliclick c:20,200"')
-	scpt.run()
+	os.system('cliclick c:20,200')
 
 # Type
 def typeIntoConsole(string):
@@ -268,6 +324,8 @@ def pan(direction):
 	coords = getCoordsForDirection(direction)
 
 	os.system('cliclick dd:' + coords)
+
+pan('down')
 
 def endPan(direction):
 	os.system('cliclick du:.')
