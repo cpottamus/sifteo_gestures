@@ -7,7 +7,8 @@
 import usb # expects PyUSB (http://pyusb.sourceforge.net) to be installed
 import sys
 import time
-from scripts import * 
+import threading
+from scripts import *
 
 
 SIFTEO_VID  = 0x22fa
@@ -44,6 +45,7 @@ LAST_TAP_TIME_1 = 0 #Time of last tap
 JUST_TAPPED_1 = 0 #Flag for initial touch (to determine if there is a second touch in time)
 IS_LONG_TOUCHING_1 = 0 #long touch flag
 ACCEL_X_START_1 = 0 #Accel x start time
+TILT_DIRECTION_1 = '' #Tilt direction
 
 # Resign an unsigned int
 def resign(x):
@@ -106,6 +108,7 @@ def receive(dev, timeout=500):
 
 dev = find_and_open()
 b = 0
+print "Connected"
 while True:
     msg = [b]
     b = (b + 1) % 100
@@ -132,38 +135,38 @@ while True:
         tch1 = payload[14]
         shk1 = payload[15]
 
-        # print "ax1: " + str(ax1)
-        # print "ay1: " + str(ay1)
-        print "az1: " + str(az1)
+        # print "ax: " + str(ax)
+        # print "ay: " + str(ay)
+
+    # Keep track of current time so there aren't race conditions
+    now = time.time()
 
 ########## TOUCH #############
 
     # If tapped and not touching before
     if tch and not IS_TOUCHING:
         # Start timer for holding interval
-        TOUCH_START = time.time()
+        TOUCH_START = now
 
     # If a short tap (just removed finger and the tap was short)
-    if not tch and IS_TOUCHING and time.time() - TOUCH_START < .3:
-
+    if not tch and IS_TOUCHING and now - TOUCH_START < .3:
         # Set tap flag
         JUST_TAPPED = 1
 
         # Detect double tap (this tap came almost immediately after last tap)
-        if time.time() - LAST_TAP_TIME < CLICK_LATENCY_MAX:            
+        if now - LAST_TAP_TIME < CLICK_LATENCY_MAX:            
             helpMenuMouse()
             JUST_TAPPED = 0  
 
-        LAST_TAP_TIME = time.time()
+        LAST_TAP_TIME = now
 
     # If a single tap (just tapped and enough time has passed for it to not be a double tap)
-    if JUST_TAPPED and time.time() - LAST_TAP_TIME >= CLICK_LATENCY_MAX:
-        playPause()
+    if JUST_TAPPED and now - LAST_TAP_TIME >= CLICK_LATENCY_MAX:
+        click()
         JUST_TAPPED = 0
 
     # If long touch (still holding down and have been for awhile)
-    if tch and time.time() - TOUCH_START >= .3:
-        keyDownCommand()
+    if tch and now - TOUCH_START >= .3:
         IS_LONG_TOUCHING = 1
 
     # Just finished long touch
@@ -177,8 +180,11 @@ while True:
     # Currently long touching and new tx tilt
     if IS_LONG_TOUCHING and not tx == IS_TILTING_X:
 
+        # Key down the command key to initiate application overlay if it's not already up
+        keyDownCommand()
+
         # If right tilt
-        if tx == 1:
+        if tx == 1:            
             nextApplication()
         # If left tilt
         if tx == -1:
@@ -188,20 +194,29 @@ while True:
     if IS_LONG_TOUCHING and not ty == IS_TILTING_Y:
 
         # If up tilt
-        if tx == 1:
-            volumeUp()
+        if ty == 1:
+            desktop()
         # If down tilt
-        if tx == -1:
-            volumeDown()
+        if ty == -1:
+            expose()
 
 
 ########## Shake #############
 
     # New shake while not long touching
     if shk and not IS_SHAKING and not IS_LONG_TOUCHING:
-        dialog()
+        helpMenuMouse()
 
 ########## Accel #############
+
+    # Not long holding
+    if not IS_LONG_TOUCHING and (abs(ax) > 10 or abs(ay) > 10):
+        ax /= 100 # Change signs because ???
+        ay /= 100 # Change signs because ???
+        xDiff = str(ax) if ax < 0 else '+'+str(ax) # Set to '-ax' or '+ax'
+        yDiff = str(ay) if ay < 0 else '+'+str(ay) # Set to '-ay' or '+ay'
+        # move(xDiff, yDiff)
+        threading.Thread(target = move, args = (xDiff, yDiff)).start()
 
 
 ########## Update Variables #############
@@ -218,28 +233,28 @@ while True:
         # If tapped and not touching before
         if tch1 and not IS_TOUCHING_1:
             # Start timer for holding interval
-            TOUCH_START_1 = time.time()
+            TOUCH_START_1 = now
         
         # If a short tap (just removed finger and the tap was short)
-        if not tch1 and IS_TOUCHING_1 and time.time() - TOUCH_START_1 < .3:
+        if not tch1 and IS_TOUCHING_1 and now - TOUCH_START_1 < .3:
 
             # Set tap flag
             JUST_TAPPED_1 = 1
 
             # Detect double tap (this tap came almost immediately after last tap)
-            if time.time() - LAST_TAP_TIME_1 < CLICK_LATENCY_MAX:
+            if now - LAST_TAP_TIME_1 < CLICK_LATENCY_MAX:
                 shuffle()
                 JUST_TAPPED_1 = 0  
 
-            LAST_TAP_TIME_1 = time.time()
+            LAST_TAP_TIME_1 = now
 
         # If a single tap (just tapped and enough time has passed for it to not be a double tap)
-        if JUST_TAPPED_1 and time.time() - LAST_TAP_TIME_1 >= CLICK_LATENCY_MAX:
+        if JUST_TAPPED_1 and now - LAST_TAP_TIME_1 >= CLICK_LATENCY_MAX:
             playPause()
             JUST_TAPPED_1 = 0
 
         # If long touch (still holding down and have been for awhile)
-        if tch1 and time.time() - TOUCH_START_1 >= .3:
+        if tch1 and now - TOUCH_START_1 >= .3:
             IS_LONG_TOUCHING_1 = 1        
 
         # Just finished long touch
@@ -272,18 +287,103 @@ while True:
 
         # New shake while not long touching
         if shk1 and not IS_SHAKING_1 and not IS_LONG_TOUCHING_1:
-            dialog()            
+            helpMenuMusic()            
 
         ########## ACCEL #############
 
         # New move right and is long touching
-        if ax1 < -60 and time.time() - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
+        if ax1 < -60 and now - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
             fastFoward()
-            ACCEL_X_START_1 = time.time()
+            ACCEL_X_START_1 = now
         # New move left and is long touching
-        elif ax1 > 60 and time.time() - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
+        elif ax1 > 60 and now - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
             rewind()
-            ACCEL_X_START_1 = time.time()
+            ACCEL_X_START_1 = now
+
+        ########## UPDATE VARIABLES #############  
+        IS_TOUCHING_1 = tch1
+        IS_TILTING_X_1 = tx1
+        IS_TILTING_Y_1 = ty1
+        IS_SHAKING_1 = shk1
+
+    # Google Earth
+    elif CURR_APP == 'Google Chrome':
+        ########## TAP #############
+
+        # If tapped and not touching before
+        if tch1 and not IS_TOUCHING_1:
+            # Start timer for holding interval
+            print 'starttouch'
+            TOUCH_START_1 = now
+        
+        # If a short tap (just removed finger and the tap was short)
+        if not tch1 and IS_TOUCHING_1 and now - TOUCH_START_1 < .3:
+            print 'tap'
+            # Set tap flag
+            JUST_TAPPED_1 = 1
+
+            # Detect double tap (this tap came almost immediately after last tap)
+            if now - LAST_TAP_TIME_1 < CLICK_LATENCY_MAX:
+                JUST_TAPPED_1 = 0  
+
+            LAST_TAP_TIME_1 = now
+
+        # If a single tap (just tapped and enough time has passed for it to not be a double tap)
+        if JUST_TAPPED_1 and now - LAST_TAP_TIME_1 >= CLICK_LATENCY_MAX:
+            JUST_TAPPED_1 = 0
+
+        # If long touch (still holding down and have been for awhile)
+        if tch1 and now - TOUCH_START_1 >= .3:
+            IS_LONG_TOUCHING_1 = 1        
+
+        # Just finished long touch
+        if not tch1 and IS_LONG_TOUCHING_1:
+            IS_LONG_TOUCHING_1 = 0        
+
+        ########## TILT #############     
+
+        # Currently long touching and new tx tilt (added z tilt check to make sure tilting instead of accelerating)
+        if IS_LONG_TOUCHING_1 and tx1 and not IS_TILTING_X_1 and az1 < 40:
+
+            # If right tilt
+            if tx1 == 1:
+                pan('right')
+                TILT_DIRECTION_1 = 'right'
+            # If left tilt
+            if tx1 == -1:
+                pan('left')
+                TILT_DIRECTION_1 = 'left'
+
+        # Currently long touching and new ty tilt (added z tilt check to make sure tilting instead of accelerating)
+        if IS_LONG_TOUCHING_1 and ty1 and not IS_TILTING_Y_1 and az1 < 40:
+
+            # If up tilt
+            if ty1 == 1:
+                pan('down')
+                TILT_DIRECTION_1 = 'down'
+            # If down tilt
+            if ty1 == -1:
+                pan('up')
+                TILT_DIRECTION_1 = 'up'
+
+        # Just stopped tilt
+        if (not tx1 and IS_TILTING_X_1) or (not ty1 and IS_TILTING_Y_1):
+            endPan(TILT_DIRECTION_1)
+
+        ########## SHAKE #############
+
+        # New shake while not long touching
+        if shk1 and not IS_SHAKING_1 and not IS_LONG_TOUCHING_1:
+            helpMenuEarth()         
+
+        ########## ACCEL #############
+
+        # New move right and is long touching
+        if ax1 < -60 and now - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
+            ACCEL_X_START_1 = now
+        # New move left and is long touching
+        elif ax1 > 60 and now - ACCEL_X_START_1 > .3 and IS_LONG_TOUCHING_1:
+            ACCEL_X_START_1 = now
 
         ########## UPDATE VARIABLES #############  
         IS_TOUCHING_1 = tch1

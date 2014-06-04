@@ -1,0 +1,38 @@
+<html>
+<head>
+  <title>Google Earth</title>
+  <script type="text/javascript" src="https://www.google.com/jsapi"> </script>
+  <script type="text/javascript">
+    var ge;
+    google.load("earth", "1", {"other_params":"sensor=true_or_false"});
+
+    // Create new instance of Google Earth plugin
+    function init() {
+      google.earth.createInstance('map3d', initCB, failureCB);
+    }
+
+    // Called when plugin is successfully created
+    function initCB(instance) {
+      ge = instance;
+      ge.getWindow().setVisibility(true);
+    }
+
+    // Called when plugin creation failed
+    function failureCB(errorCode) {
+    	console.log("Error: " + errorCode);
+    }
+
+    // Initialize on page load
+    google.setOnLoadCallback(init);
+  </script>
+
+</head>
+
+<body>
+  <div id="map3d" style="height: 400px; width: 600px;"></div>
+</body>
+
+<script>
+	
+
+</html>

@@ -7,7 +7,6 @@ from applescript import AppleScript, AEType
 
 ## Help dialog
 
-
 def helpMenuMusic():
 	scpt = AppleScript('''
 		tell application (path to frontmost application as text)
@@ -77,18 +76,18 @@ def minimize2():
 	scpt.run()
 
 ## Move windows
-# Base function for running expose-related shell scripts
-def exposeShellScript(num):
-	scpt = AppleScript('do shell script "/Applications/Utilities/Expose.app/Contents/MacOS/Expose ' + str(num) + '"')
+# Base function for running window-related commands
+def windowCommand(keycode):
+	scpt = AppleScript('tell application "System Events" to key code ' + str(keycode))
 	scpt.run()
 
-# See all windows; this will also return to normal window mode when in expose/desktop mode
+# See all windows
 def expose():
-	exposeShellScript(0)
+	windowCommand(101)
 
-# Move windows away to see desktop
+# Move all windows to see desktop
 def desktop():
-	exposeShellScript(1)
+	windowCommand(103)
 
 ## Application switching
 def keyDownCommand():
@@ -141,41 +140,17 @@ def playSoundEffect(sound):
 	''')
 	scpt.run()
 
-## Volume functions
-def volumeUp():
-	scpt = AppleScript('''				
-		set volOutput to output volume of (get volume settings)
-	    set volume output volume (volOutput + 6.25)
+# Trigger the volume sound (note: it's included in this directory because the one in the OS is too long and causes blocking)
+def playVolumeSound():
+	scpt = AppleScript('''
+		do shell script "afplay volume.aiff"
 	''')
 	scpt.run()
-	playVolumeSound()
-
-def volumeDown():
-	scpt = AppleScript('''				
-		set volOutput to output volume of (get volume settings)
-	    set volume output volume (volOutput - 6.25)
-	''')
-	scpt.run()
-	playVolumeSound()
 
 # Show notification (doesn't work)
 def overlay():
 	scpt = AppleScript('''				
 		display notification "HI SCOTT"
-	''')
-	scpt.run()
-
-def mute():
-	scpt = AppleScript('''				
-		set isMuted to output muted of (get volume settings)
-	    set volume output muted (not isMuted)
-	''')
-	scpt.run()
-
-# Trigger the volume sound (note: it's included in this directory because the one in the OS is too long and causes blocking)
-def playVolumeSound():
-	scpt = AppleScript('''
-		do shell script "afplay volume.aiff"
 	''')
 	scpt.run()
 
@@ -219,6 +194,84 @@ def shuffle():
 	''')
 	scpt.run()
 	playSoundEffect('Purr')
+
+## Volume functions
+def volumeUp():
+	scpt = AppleScript('''				
+		set volOutput to output volume of (get volume settings)
+	    set volume output volume (volOutput + 6.25)
+	''')
+	scpt.run()
+	playVolumeSound()
+
+def volumeDown():
+	scpt = AppleScript('''				
+		set volOutput to output volume of (get volume settings)
+	    set volume output volume (volOutput - 6.25)
+	''')
+	scpt.run()
+	playVolumeSound()
+
+def mute():
+	scpt = AppleScript('''				
+		set isMuted to output muted of (get volume settings)
+	    set volume output muted (not isMuted)
+	''')
+	scpt.run()
+
+####################################
+##             Mouse              ##
+####################################
+def cliclick(argument):
+	scpt = AppleScript('do shell script "cliclick ' + argument + '"')
+	scpt.run()
+
+def click():
+	cliclick('c:.')
+
+def move(xDiff, yDiff):
+	cliclick('m:' + xDiff + ',' + yDiff)
+	print "move"
+
+####################################
+##         Google Earth           ##
+####################################
+# Click in the console
+def getInConsole():
+	scpt = AppleScript('do shell script "cliclick c:20,700"')
+	scpt.run()
+
+# Click in Google Earth div
+def getInEarth():
+	scpt = AppleScript('do shell script "cliclick c:20,200"')
+	scpt.run()
+
+# Type
+def typeIntoConsole(string):
+	getInConsole()
+	scpt = AppleScript('tell application "System Events" to keystroke "' + string + '"')
+	scpt2 = AppleScript('tell application "System Events" to keystroke return')
+	scpt.run()
+	scpt2.run()
+
+# Pan
+def pan(direction):
+	getInEarth()
+
+	scpt = AppleScript('''
+		tell application "System Events" 
+			key down "%s arrow"
+		end tell
+		''' % direction)	
+	scpt.run()
+
+def endPan(direction):
+	scpt = AppleScript('''
+		tell application "System Events" 
+			key up "%s arrow"
+		end tell
+		''' % direction)
+	scpt.run()
 
 ####################################
 ##              Test              ##
@@ -265,5 +318,9 @@ def demoVolume():
 	volumeDown()
 	volumeDown()
 
-# demoApplicationSwitching()
-# demoVolume()
+def demoPan():
+	pan('left')
+	delay()
+	endPan('left')
+
+# demoPan()
