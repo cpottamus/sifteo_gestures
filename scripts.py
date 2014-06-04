@@ -20,7 +20,7 @@ def helpMenuMusic():
 def helpMenuMouse():
 	scpt = AppleScript('''
 		tell application (path to frontmost application as text)
-			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+			display dialog "Possible motions:\nWhile Holding Touch: Tilt up/down for dashboard commands.\nTilt left/right to switch applications.\nWithout touch: move to mouse around! Tap/double tap to click/double-click."
 		end tell
 	''')
 	scpt.run()
@@ -28,7 +28,7 @@ def helpMenuMouse():
 def helpMenuEarth():
 	scpt = AppleScript('''
 		tell application (path to frontmost application as text)
-			display dialog "Possible motions:\nTilt, Shake, Move, Tap"
+			display dialog "Possible motions:\nWhile Holding Touch: Tilt to move around, move vertically to zoom."
 		end tell
 	''')
 	scpt.run()
